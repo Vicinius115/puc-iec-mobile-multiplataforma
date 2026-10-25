@@ -1,3 +1,5 @@
+
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -14,19 +16,28 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'TMDB Popular Movies',
         short_name: 'TMDB Movies',
-        description: 'Filmes populares do The Movie Database — funciona offline',
+        description:
+          'Filmes populares do The Movie Database — funciona offline',
         theme_color: '#01b4e4',
         background_color: '#0d253f',
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: 'icons/pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/pwa-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'icons/pwa-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'icons/pwa-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
         ],
       },
       workbox: {
@@ -37,15 +48,28 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'tmdb-api',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
             },
           },
           {
-            urlPattern: /^https:\/\/image\.themoviedb\.org\//,
+            urlPattern: /^https:\/\/image\.tmdb\.org\//,
             handler: 'CacheFirst',
             options: {
               cacheName: 'tmdb-images',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
             },
           },
         ],

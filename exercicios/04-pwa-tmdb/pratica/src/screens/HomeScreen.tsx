@@ -1,9 +1,10 @@
 // src/screens/HomeScreen.tsx
 
+
 import { useState, useRef } from 'react';
 import { usePopularMovies, isTokenMissing } from '../hooks/useTmdb';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { useOfflineStatus } from '../hooks/useOfflineStatus'; // TODO 3 — Passo 3
+import { useOfflineStatus } from '../hooks/useOfflineStatus';
 import { AppHeader } from '../components/AppHeader';
 import { InstallButton } from '../components/InstallButton';
 import { MovieCard } from '../components/MovieCard';
@@ -35,11 +36,15 @@ const searchInputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
-export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
+export function HomeScreen({
+  activeTab,
+  isFavorite,
+  toggleFavorite,
+}: Props) {
   const { movies, loading, error, hasMore, loadMore } = usePopularMovies();
   const [search, setSearch] = useState('');
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { isOnline } = useOfflineStatus(); // TODO 3 — Passo 3
+  const { isOnline } = useOfflineStatus();
 
   useInfiniteScroll(sentinelRef, loadMore);
 
@@ -47,43 +52,68 @@ export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
   if (error) return <ErrorScreen error={error} />;
 
   const isEmpty = !loading && movies.length === 0;
+  const favMovies = movies.filter((m) => isFavorite(m.id));
 
-  // ─── tab: favorites — TODO 3 ────────────────────────────────────────────────
-  // Passo 1: filtre `movies` por isFavorite(m.id) → `favMovies`
-  //   Renderize um <MovieCard key={m.id} movie={m} isFavorite={true} onToggleFavorite={toggleFavorite} />
-  //   por cada filme em favMovies dentro de <section>...</section>
-  //
-  // Passo 2: estado vazio — se favMovies.length === 0, mostre <p>:
-  //   - isEmpty é true  → 'Nenhum filme carregado ainda.'
-  //   - isEmpty é false → 'Nenhum favorito ainda — toque ★ em um filme.'
-  //   Estilo sugerido: {{ color: '#90a4ae', textAlign: 'center', padding: '40px 0', fontSize: 15 }}
-  //
-  // Passo 3: banner offline — use `isOnline` (já importado acima)
-  //   Se !isOnline, renderize ANTES da lista:
-  //   <div style={{ background:'#C2410C', color:'#fff', padding:'8px 16px', textAlign:'center', fontSize:14 }}>
-  //     📡 Offline — exibindo dados do cache
-  //   </div>
   if (activeTab === 'favorites') {
     return (
       <main style={styles.main} className="main-content">
         <AppHeader title="★ Favoritos" />
-        {/* TODO 3 — implemente os Passos 1, 2 e 3 aqui */}
-        <p style={{ color: '#90a4ae', textAlign: 'center', padding: '40px 0' }}>
-          🚧 Passo 1: filtre e renderize os filmes favoritos
-        </p>
+
+        {!isOnline && (
+          <div
+            style={{
+              background: '#C2410C',
+              color: '#fff',
+              padding: '8px 16px',
+              textAlign: 'center',
+              fontSize: 14,
+            }}
+          >
+            📡 Offline — exibindo dados do cache
+          </div>
+        )}
+
+        <section>
+          {favMovies.length === 0 ? (
+            <p
+              style={{
+                color: '#90a4ae',
+                textAlign: 'center',
+                padding: '40px 0',
+                fontSize: 15,
+              }}
+            >
+              {isEmpty
+                ? 'Nenhum filme carregado ainda.'
+                : 'Nenhum favorito ainda — toque ★ em um filme.'}
+            </p>
+          ) : (
+            favMovies.map((m) => (
+              <MovieCard
+                key={m.id}
+                movie={m}
+                isFavorite={true}
+                onToggleFavorite={toggleFavorite}
+              />
+            ))
+          )}
+        </section>
       </main>
     );
   }
 
-  // — tab: search
   if (activeTab === 'search') {
     const visible = search.trim()
-      ? movies.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()))
+      ? movies.filter((m) =>
+          m.title.toLowerCase().includes(search.toLowerCase())
+        )
       : movies;
+
     return (
       <main style={styles.main} className="main-content">
         <AppHeader title="🔍 Buscar" />
         <NetworkToggle />
+
         <input
           type="search"
           placeholder="Buscar filme…"
@@ -91,16 +121,24 @@ export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
           onChange={(e) => setSearch(e.target.value)}
           style={searchInputStyle}
           aria-label="Buscar filme"
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
+
         <section>
           {visible.length === 0 && search && (
-            <p style={{ color: '#90a4ae', textAlign: 'center', padding: 24 }}>
+            <p
+              style={{
+                color: '#90a4ae',
+                textAlign: 'center',
+                padding: 24,
+              }}
+            >
               Nenhum resultado para "{search}"
             </p>
           )}
+
           {isEmpty && !search && <EmptyMoviesScreen />}
+
           {visible.map((m) => (
             <MovieCard
               key={m.id}
@@ -110,25 +148,30 @@ export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
             />
           ))}
         </section>
+
         {loading && (
           <section aria-label="Carregando mais filmes">
             <MovieCardSkeleton />
             <MovieCardSkeleton />
           </section>
         )}
-        {hasMore && !loading && <div ref={sentinelRef} style={{ height: 1 }} />}
+
+        {hasMore && !loading && (
+          <div ref={sentinelRef} style={{ height: 1 }} />
+        )}
       </main>
     );
   }
 
-  // — tab: home (default)
   return (
     <main style={styles.main} className="main-content">
       <AppHeader />
       <NetworkToggle />
       <InstallButton />
+
       <section>
         {isEmpty && <EmptyMoviesScreen />}
+
         {movies.map((m) => (
           <MovieCard
             key={m.id}
@@ -138,6 +181,7 @@ export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
           />
         ))}
       </section>
+
       {loading && (
         <section aria-label="Carregando mais filmes">
           <MovieCardSkeleton />
@@ -145,7 +189,10 @@ export function HomeScreen({ activeTab, isFavorite, toggleFavorite }: Props) {
           <MovieCardSkeleton />
         </section>
       )}
-      {hasMore && !loading && <div ref={sentinelRef} style={{ height: 1 }} />}
+
+      {hasMore && !loading && (
+        <div ref={sentinelRef} style={{ height: 1 }} />
+      )}
     </main>
   );
 }
